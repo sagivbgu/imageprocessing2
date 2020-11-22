@@ -1,0 +1,37 @@
+- 1. Loads and displays an image, I.
+- 2. Apply edge detection filter on the image I to obtain a response image, R
+- 3. Threshold the image R to convert it to binary image, B
+- 4. Detect the lines and circles in the image B
+	- 4a. Function that generates pairs or triples of points with value 1 out of picture B
+	- 4b. Create a function / class that given (rho, theta, ...) accesses the matrix in the correct cell (proxy)
+		- Discretisize the "hough matrix" - 2 pixels: Any two different lines or circles may intersect, but not coincide (they should be at least two pixels apart)
+	- 4c. Lines
+		- For each 2 points find a linear equation
+			- Convert to trigonometric representation
+			- Pay attention to "rho" vs. "r" (reshit hatsirim)
+			- Increment the value in the corresponding cell in the "hough" matrix
+		- Choose the most prominent lines (boundaries) by
+			- Applying a threshold
+	- 4d. Circles
+		(*) Representation of the "hough matrix": the class / function as described in 4b.
+		- For each 3 points find a circle equation
+			- Convert to a,b,r representation
+			- Increment the value in the corresponding cell in the "hough" matrix
+		- Choose the most prominent lines (boundaries) by
+			- Applying a threshold
+- 5. Display the detected lines and circles on top of the original image.
+- 6. Output the list of lines and list of circles
+
+Person A
+2
+3
+4a
+4b
+4c
+
+Person B
+1
+5
+4c
+6
+
