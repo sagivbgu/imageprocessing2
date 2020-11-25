@@ -12,6 +12,10 @@ sobel_edge_detection_on_y = np.float32([ [1, 2, 1],
                                          [-1, -2, -1]])
 
 
+def blur_image(img, val=5):
+    return cv.GaussianBlur(img, (val, val), 0)
+
+
 def apply_edge_detection(img):
     """
     :param img: a padded image
@@ -70,18 +74,7 @@ def remove_padding_from_image(img, add_h=PADDING, add_w=PADDING):
     :param add_w: The number of pixels to add as a padding to each side (width)
     :return: The original image
     """
-    h, w = img.shape
-    new_h = h + add_h * 2
-    new_w = w + add_w * 2
-
-    new_image = create_empty_img(new_h, new_w)
-    for y in range(h):
-        for x in range(w):
-            new_x = x + add_w
-            new_y = y + add_h
-            new_image[new_y][new_x] = img[y][x]
-
-    return new_image
+    pass
 
 
 def create_empty_img(h, w, color=0):
