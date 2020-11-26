@@ -43,13 +43,25 @@ def generate_triple(image, val=255):
 
 class HoughMatrix2D:
     def __init__(self, img_height, img_width):
-        self.img_height = img_height
-        self.img_width = img_width
+        self._threshold = img_height * img_width // 10  # TODO: Play with this formula! May be just a constant
+
+        self._img_height = img_height
+        self._img_width = img_width
         img_diagonal = math.sqrt(img_height ** 2 + img_width ** 2)
 
-        r_max = self._transform_r(img_diagonal)
-        theta_max = self._transform_theta(math.pi * 2)
-        self.mat = [0 for _ in range(r_max) for _ in range(theta_max)]
+        self._r_max = self._transform_r(img_diagonal)
+        self._theta_max = self._transform_theta(math.pi * 2)
+        self._mat = [[0 for _ in range(self._r_max)] for _ in range(self._theta_max)]
+
+    def increment(self, r, theta):
+        self._mat[r][theta] += 1
+
+    def get(self, r, theta):
+        return self._mat[r][theta]
+
+    def get_all_above_threshold(self):
+        return [(r, theta) for theta in range(self._theta_max) for r in range(self._r_max) if
+                self._mat[r][theta] > self._threshold]
 
     # Division by 2: Discretisize the "hough matrix".
     # Any two different lines or circles may intersect, but not coincide (they should be at least two pixels apart).
@@ -57,25 +69,37 @@ class HoughMatrix2D:
         return r // 2  # Operator // is floor division, returns int
 
     def _transform_theta(self, theta):
-        return theta // (self.img_height + self.img_width)  # TODO: Check this formula
-
-    def increment(self, r, theta):
-        self.mat[r][theta] += 1
-
-    def get(self, r, theta):
-        return self.mat[r][theta]
+        return theta // (self._img_height + self._img_width)  # TODO: Check this formula
 
 
 class HoughMatrix3D:
     def __init__(self, img_height, img_width):
-        self.img_height = img_height
-        self.img_width = img_width
+        self._threshold = img_height * img_width // 10  # TODO: Play with this formula! May be just a constant
+
+        self._img_height = img_height
+        self._img_width = img_width
         img_diagonal = math.sqrt(img_height ** 2 + img_width ** 2)
 
-        a_max = self._transform_a(img_width)
-        b_max = self._transform_b(img_height)
-        r_max = self._transform_r(img_diagonal)
-        self.mat = [0 for _ in range(r_max) for _ in range(b_max) for _ in range(a_max)]
+        self._a_max = self._transform_a(img_width)
+        self._b_max = self._transform_b(img_height)
+        self._r_max = self._transform_r(img_diagonal)
+        self._mat = [[[0 for _ in range(self._r_max)] for _ in range(self._b_max)] for _ in range(self._a_max)]
+
+    def increment(self, a, b, r):
+        a = self._transform_a(a)
+        b = self._transform_b(b)
+        r = self._transform_r(r)
+        self._mat[a][b][r] += 1
+
+    def get(self, a, b, r):
+        a = self._transform_a(a)
+        b = self._transform_b(b)
+        r = self._transform_r(r)
+        return self._mat[a][b][r]
+
+    def get_all_above_threshold(self):
+        return [(a, b, r) for r in range(self._r_max) for b in range(self._b_max) for a in range(self._a_max) if
+                self._mat[a][b][r] > self._threshold]
 
     # Division by 2: Discretisize the "hough matrix".
     # Any two different lines or circles may intersect, but not coincide (they should be at least two pixels apart).
@@ -87,15 +111,3 @@ class HoughMatrix3D:
 
     def _transform_r(self, r):
         return r // 2
-
-    def increment(self, a, b, r):
-        a = self._transform_a(a)
-        b = self._transform_b(b)
-        r = self._transform_r(r)
-        self.mat[a][b][r] += 1
-
-    def get(self, a, b, r):
-        a = self._transform_a(a)
-        b = self._transform_b(b)
-        r = self._transform_r(r)
-        return self.mat[a][b][r]
