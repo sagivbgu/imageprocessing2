@@ -44,6 +44,7 @@ def apply_edge_detection(img):
             gy = apply_filter(sobel_edge_detection_on_y, roi)
             g = ((gx ** 2) + (gy ** 2)) ** 0.5
             new_image[y][x] = g
+
     return new_image
 
 
@@ -147,32 +148,30 @@ def apply_dilation(img):
     return new_image
 
 
-def apply_erosion(img):
-    """
-
-    :param img: a padded image after Sober and threshold applied
-    :return:
-    """
-    height, width = img.shape
-    new_image = create_empty_img(height, width)
-
-    for y in range(PADDING, height - PADDING):
-        for x in range(PADDING, width - PADDING):
-            # Get all the 9 pixels area around the current pixel
-            roi = img[y - 1: y + 2, x - 1: x + 2]
-
-            # if at least one pixel in the region is black, then the
-            # center pixel is black
-            if 0 in roi:
-                new_image[y][x] = 0
-            # if all other pixels are white - then the center will be white
-            else:
-                new_image[y][x] = 0
-
-    return new_image
-
-
 def apply_thinning(img):
+    # Structuring Element
+    kernel = cv.getStructuringElement(cv.MORPH_CROSS, (3, 3))
+    # Create an empty output image to hold values
+    thin = np.zeros(img.shape, dtype='uint8')
+
+    temp_image = img.copy()
+
+    # Loop until erosion leads to an empty set
+    while cv.countNonZero(temp_image) != 0:
+        # Erosion
+        erode = cv.erode(temp_image, kernel)
+        # Opening on eroded image
+        opening = cv.morphologyEx(erode, cv.MORPH_OPEN, kernel)
+        # Subtract these two
+        subset = erode - opening
+        # Union of all previous sets
+        thin = cv.bitwise_or(subset, thin)
+        # Set the eroded image for next iteration
+        temp_image = erode.copy()
+
+    return thin
+
+def apply_thinning_old(img):
     # Algorithm by
     # https://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm
     #

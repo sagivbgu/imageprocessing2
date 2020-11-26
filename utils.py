@@ -47,13 +47,20 @@ class HoughMatrix2D:
 
         self._img_height = img_height
         self._img_width = img_width
-        img_diagonal = math.sqrt(img_height ** 2 + img_width ** 2)
+        self.img_diagonal = math.sqrt(img_height ** 2 + img_width ** 2)
 
-        self._rho_max = self._transform_rho(img_diagonal)
-        self._theta_max = self._transform_theta(math.pi)
-        self._mat = [[0 for _ in range(self._rho_max)] for _ in range(self._theta_max)]
+        self.rho_quanta = 1
+        self.rho_min = self._transform_rho(- self.img_diagonal)
+        self.rho_max = self._transform_rho(self.img_diagonal)
+
+        self.theta_quanta = (math.pi / (self._img_height + self._img_width))
+        self.theta_min = self._transform_theta(- math.pi)
+        self.theta_max = self._transform_theta(math.pi)
+        self._mat = [[0 for _ in range(self.rho_max)] for _ in range(self.theta_max)]
 
     def increment(self, rho, theta):
+        rho = self._transform_rho(rho)
+        theta = self._transform_theta(theta)
         self._mat[rho][theta] += 1
 
     def get(self, rho, theta):
@@ -62,18 +69,26 @@ class HoughMatrix2D:
         return self._mat[rho][theta]
 
     def get_all_above_threshold(self):
-        return [(rho, theta) for theta in range(self._theta_max) for rho in range(self._rho_max) if
+        return [(rho, theta) for theta in range(self.theta_max) for rho in range(self.rho_max) if
                 self._mat[rho][theta] > self._threshold]
 
     # Division by 2: Discretisize the "hough matrix".
     # Any two different lines or circles may intersect, but not coincide (they should be at least two pixels apart).
     def _transform_rho(self, rho):
-        return rho // 2  # Operator // is floor division, returns int
+        return int((rho + self.img_diagonal) // 2)
+
+    def _inverse_rho(self, index):
+        return (index * 2) - self.img_diagonal
 
     def _transform_theta(self, theta):
-        new_theta = (theta + math.pi) / (math.pi / (self._img_height + self._img_width))
+        new_theta = (theta + math.pi) / self.theta_quanta
         return math.floor(new_theta)
 
+    def _inverse_theta(self, index):
+        return (index * self.theta_quanta) - math.pi
+
+    def calc_rho(self, x, y, theta):
+        return -x * math.cos(theta) + y * math.sin(theta)
 
 class HoughMatrix3D:
     def __init__(self, img_height, img_width):
