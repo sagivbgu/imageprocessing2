@@ -49,27 +49,30 @@ class HoughMatrix2D:
         self._img_width = img_width
         img_diagonal = math.sqrt(img_height ** 2 + img_width ** 2)
 
-        self._r_max = self._transform_r(img_diagonal)
-        self._theta_max = self._transform_theta(math.pi * 2)
-        self._mat = [[0 for _ in range(self._r_max)] for _ in range(self._theta_max)]
+        self._rho_max = self._transform_rho(img_diagonal)
+        self._theta_max = self._transform_theta(math.pi)
+        self._mat = [[0 for _ in range(self._rho_max)] for _ in range(self._theta_max)]
 
-    def increment(self, r, theta):
-        self._mat[r][theta] += 1
+    def increment(self, rho, theta):
+        self._mat[rho][theta] += 1
 
-    def get(self, r, theta):
-        return self._mat[r][theta]
+    def get(self, rho, theta):
+        rho = self._transform_rho(rho)
+        theta = self._transform_theta(theta)
+        return self._mat[rho][theta]
 
     def get_all_above_threshold(self):
-        return [(r, theta) for theta in range(self._theta_max) for r in range(self._r_max) if
-                self._mat[r][theta] > self._threshold]
+        return [(rho, theta) for theta in range(self._theta_max) for rho in range(self._rho_max) if
+                self._mat[rho][theta] > self._threshold]
 
     # Division by 2: Discretisize the "hough matrix".
     # Any two different lines or circles may intersect, but not coincide (they should be at least two pixels apart).
-    def _transform_r(self, r):
-        return r // 2  # Operator // is floor division, returns int
+    def _transform_rho(self, rho):
+        return rho // 2  # Operator // is floor division, returns int
 
     def _transform_theta(self, theta):
-        return theta // (self._img_height + self._img_width)  # TODO: Check this formula
+        new_theta = (theta + math.pi) / (math.pi / (self._img_height + self._img_width))
+        return math.floor(new_theta)
 
 
 class HoughMatrix3D:
@@ -78,11 +81,10 @@ class HoughMatrix3D:
 
         self._img_height = img_height
         self._img_width = img_width
-        img_diagonal = math.sqrt(img_height ** 2 + img_width ** 2)
 
         self._a_max = self._transform_a(img_width)
         self._b_max = self._transform_b(img_height)
-        self._r_max = self._transform_r(img_diagonal)
+        self._r_max = self._transform_r(min(img_height, img_width) // 2)
         self._mat = [[[0 for _ in range(self._r_max)] for _ in range(self._b_max)] for _ in range(self._a_max)]
 
     def increment(self, a, b, r):
@@ -98,7 +100,8 @@ class HoughMatrix3D:
         return self._mat[a][b][r]
 
     def get_all_above_threshold(self):
-        return [(a, b, r) for r in range(self._r_max) for b in range(self._b_max) for a in range(self._a_max) if
+        return [(self._inv_transform_a(a), self._inv_transform_b(b), self._inv_transform_r(r)) for r in
+                range(self._r_max) for b in range(self._b_max) for a in range(self._a_max) if
                 self._mat[a][b][r] > self._threshold]
 
     # Division by 2: Discretisize the "hough matrix".
@@ -111,3 +114,12 @@ class HoughMatrix3D:
 
     def _transform_r(self, r):
         return r // 2
+
+    def _inv_transform_a(self, a):
+        return a * 2
+
+    def _inv_transform_b(self, b):
+        return b * 2
+
+    def _inv_transform_r(self, r):
+        return r * 2
