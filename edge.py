@@ -3,21 +3,15 @@ import numpy as np
 
 PADDING = 1
 
-sobel_edge_detection_on_x = np.float32([ [-1, 0, 1],
-                                         [-2, 0, 2],
-                                         [-1, 0, 1]])
-
-sobel_edge_detection_on_y = np.float32([ [1, 2, 1],
-                                         [0, 0, 0],
-                                         [-1, -2, -1]])
-
 
 def detect_edges(img, threshold_val, blur_val):
     img = blur_image(img, blur_val)
     img = add_padding_to_image(img)
     img = apply_edge_detection(img)
-    img = remove_padding_from_image(img)
     apply_threshold(img, threshold_val)
+    img = apply_dilation(img)
+    img = apply_thinning(img)
+    img = remove_padding_from_image(img)
 
     return img
 
@@ -33,6 +27,14 @@ def apply_edge_detection(img):
     """
     height, width = img.shape
     new_image = create_empty_img(height, width)
+
+    sobel_edge_detection_on_x = np.float32([[-1, 0, 1],
+                                            [-2, 0, 2],
+                                            [-1, 0, 1]])
+
+    sobel_edge_detection_on_y = np.float32([[1, 2, 1],
+                                            [0, 0, 0],
+                                            [-1, -2, -1]])
 
     for y in range(PADDING, height - PADDING):
         for x in range(PADDING, width - PADDING):
@@ -118,3 +120,130 @@ def apply_threshold(img, val=127):
             else:
                 img[y][x] = 255
     return img
+
+
+def apply_dilation(img):
+    """
+
+    :param img: a padded image after Sober and threshold applied
+    :return:
+    """
+    height, width = img.shape
+    new_image = create_empty_img(height, width)
+
+    for y in range(PADDING, height - PADDING):
+        for x in range(PADDING, width - PADDING):
+            # Get all the 9 pixels area around the current pixel
+            roi = img[y - 1: y + 2, x - 1: x + 2]
+
+            # if at least one pixel in the region is white, then the
+            # center pixel is white
+            if 255 in roi:
+                new_image[y][x] = 255
+            # if all other pixels are black - then the center will be black
+            else:
+                new_image[y][x] = 0
+
+    return new_image
+
+
+def apply_erosion(img):
+    """
+
+    :param img: a padded image after Sober and threshold applied
+    :return:
+    """
+    height, width = img.shape
+    new_image = create_empty_img(height, width)
+
+    for y in range(PADDING, height - PADDING):
+        for x in range(PADDING, width - PADDING):
+            # Get all the 9 pixels area around the current pixel
+            roi = img[y - 1: y + 2, x - 1: x + 2]
+
+            # if at least one pixel in the region is black, then the
+            # center pixel is black
+            if 0 in roi:
+                new_image[y][x] = 0
+            # if all other pixels are white - then the center will be white
+            else:
+                new_image[y][x] = 0
+
+    return new_image
+
+
+def apply_thinning(img):
+    # Algorithm by
+    # https://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm
+    #
+    # Try each of the 8 masks on each pixel
+    # if one of them returns white - set the pixel to white
+    # otherwise - set the pixel to black
+
+    height, width = img.shape
+    new_image = create_empty_img(height, width)
+
+    mask_1 = {"whites": [(2, 0), (2, 1), (2, 2)],
+              "blacks": [(0, 0), (0, 1), (0, 2)]}
+
+    mask_2 = {"whites": [(0, 0), (1, 0), (2, 0)],
+              "blacks": [(0, 2), (1, 2), (2, 2)]}
+
+    mask_3 = {"whites": [(0, 0), (0, 1), (0, 2)],
+              "blacks": [(2, 0), (2, 1), (2, 2)]}
+
+    mask_4 = {"whites": [(0, 2), (1, 2), (2, 2)],
+              "blacks": [(0, 0), (1, 0), (2, 0)]}
+
+    mask_5 = {"whites": [(1, 0), (2, 1)],
+              "blacks": [(0, 1), (0, 2), (1, 2)]}
+
+    mask_6 = {"whites": [(0, 1), (1, 0)],
+              "blacks": [(1, 2), (2, 2), (2, 1)]}
+
+    mask_7 = {"whites": [(0, 1), (1, 2)],
+              "blacks": [(1, 0), (2, 0), (2, 1)]}
+
+    mask_8 = {"whites": [(1, 2), (2, 1)],
+              "blacks": [(0, 0), (0, 1), (1, 0)]}
+
+    masks = [mask_1, mask_2, mask_3, mask_4, mask_5, mask_6, mask_7, mask_8]
+
+    for y in range(PADDING, height - PADDING):
+        for x in range(PADDING, width - PADDING):
+            # consider only white pixels:
+            if img[y][x] == 0:
+                continue
+
+            # Get all the 9 pixels area around the current pixel
+            roi = img[y - 1: y + 2, x - 1: x + 2]
+            val = 0
+
+            for mask in masks:
+                val = try_mask(roi, mask["whites"], mask["blacks"])
+                # if one mask returned white, then the pixel should be white
+                # and there is no point to check the rest
+                if val == 255:
+                    break
+
+            new_image[y][x] = val
+
+    return new_image
+
+
+def try_mask(roi, whites, blacks):
+    # whites is an array of tuples (y,x) of the locations of the white pixels to check
+    for (y, x) in whites:
+        # if one white does not match, set the center pixel to black
+        if roi[y][x] != 255:
+            return 0
+
+    for (y, x) in blacks:
+        if roi[y][x] != 0:
+            return 0
+
+    return 255
+
+
+
+
