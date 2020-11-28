@@ -1,7 +1,7 @@
 import math
 
 
-def get_pixels_with_value(image, val):
+def get_pixels_with_value(image, val=255):
     """
     Get all the pixels in the image with intensity value as val.
     :param image: The image to scan
@@ -89,52 +89,3 @@ class HoughMatrix2D:
 
     def calc_rho(self, x, y, theta):
         return -x * math.cos(theta) + y * math.sin(theta)
-
-class HoughMatrix3D:
-    def __init__(self, img_height, img_width):
-        self._threshold = img_height * img_width // 10  # TODO: Play with this formula! May be just a constant
-
-        self._img_height = img_height
-        self._img_width = img_width
-
-        self._a_max = self._transform_a(img_width)
-        self._b_max = self._transform_b(img_height)
-        self._r_max = self._transform_r(min(img_height, img_width) // 2)
-        self._mat = [[[0 for _ in range(self._r_max)] for _ in range(self._b_max)] for _ in range(self._a_max)]
-
-    def increment(self, a, b, r):
-        a = self._transform_a(a)
-        b = self._transform_b(b)
-        r = self._transform_r(r)
-        self._mat[a][b][r] += 1
-
-    def get(self, a, b, r):
-        a = self._transform_a(a)
-        b = self._transform_b(b)
-        r = self._transform_r(r)
-        return self._mat[a][b][r]
-
-    def get_all_above_threshold(self):
-        return [(self._inv_transform_a(a), self._inv_transform_b(b), self._inv_transform_r(r)) for r in
-                range(self._r_max) for b in range(self._b_max) for a in range(self._a_max) if
-                self._mat[a][b][r] > self._threshold]
-
-    # Division by 2: Discretisize the "hough matrix".
-    # Any two different lines or circles may intersect, but not coincide (they should be at least two pixels apart).
-    def _transform_a(self, a):
-        return a // 2
-
-    def _transform_b(self, b):
-        return b // 2
-
-    def _transform_r(self, r):
-        return r // 2
-
-    def _inv_transform_a(self, a):
-        return a * 2
-
-    def _inv_transform_b(self, b):
-        return b * 2
-
-    def _inv_transform_r(self, r):
-        return r * 2
