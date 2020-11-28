@@ -30,7 +30,8 @@ class HoughMatrix2D:
 
     def get_all_above_threshold(self):
         self._calc_threshold()
-        return [(self._inverse_rho(rho), self._inverse_theta(theta)) for theta in range(self.theta_max) for rho in range(self.rho_max) if
+        return [(self._inverse_rho(rho), self._inverse_theta(theta)) for theta in range(self.theta_max) for rho in
+                range(self.rho_max) if
                 self._mat[rho][theta] >= self._threshold]
 
     def _transform_rho(self, rho):
@@ -61,19 +62,12 @@ def detect_lines(img):
 
     lines_coordinates = calc_edges_points_of_lines(lines_coordinates, img)
 
-    img_with_lines = draw_lines_on_img(lines_coordinates, img)
-
-    return lines_coordinates, img_with_lines
+    return lines_coordinates
 
 
 def draw_lines_on_img(coordinates, img):
-    new_img = img.copy()
-    new_img = cv.cvtColor(new_img, cv.COLOR_GRAY2RGB)
-
     for (p1, p2) in coordinates:
-        cv.line(new_img, p1, p2, color=(255, 255, 0))
-
-    return new_img
+        cv.line(img, p1, p2, color=(255, 255, 0))
 
 
 def get_lines_coordinates(hough_mat, img):

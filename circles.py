@@ -1,8 +1,10 @@
 import json
 from math import sqrt, floor, sin, cos, pi
-import numpy as np
+import cv2 as cv
 
 from utils import get_pixels_with_value
+
+DETECTED_CIRCLE_COLOR = (255, 255, 0)
 
 """
 Parametric equation of a circle:
@@ -52,7 +54,7 @@ class HoughMatrix3D:
     def _is_above_threshold(self, radius, cell_value):
         if radius <= 8:
             return False
-        threshold = 0.6  # Recommended so far: 0.3 ~ 0.33 / 0.45 ~ 0.6
+        threshold = 0.3  # Recommended so far: 0.3 ~ 0.33 / 0.45 ~ 0.6
         return cell_value / self._theta_slices >= threshold
 
     def dump(self, filename):
@@ -117,3 +119,8 @@ def get_unique_circles(circles):
 
 def close_points(p1, p2):
     return all(abs(p2[i] - p1[i]) <= 2 for i in range(3))
+
+
+def draw_circles_on_img(circles, img):
+    for (a, b, r) in circles:
+        cv.circle(img, (a, b), r, DETECTED_CIRCLE_COLOR, 1)

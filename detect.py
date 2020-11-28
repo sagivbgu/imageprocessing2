@@ -1,10 +1,9 @@
 from sys import argv
 import cv2 as cv
 
-from circles import detect_circles
-from edge import *
-
-DETECTED_CIRCLE_COLOR = (150, 0, 0)
+from circles import detect_circles, draw_circles_on_img
+from lines import detect_lines, draw_lines_on_img
+from edge import detect_edges
 
 
 def read_image(file):
@@ -29,11 +28,14 @@ def display_image(img):
 
 def write_log_file(lines, circles, output_file_path):
     with open(output_file_path, "w") as f:
-        # TODO: Print lines
+        f.write("{lines} {circles}\n".format(lines=len(lines), circles=len(circles)))
+        for (p1, p2) in lines:
+            f.write("{x1} {y1} {x2} {y2}\n".format(x1=p1[0], y1=p1[1], x2=p2[0], y2=p2[1]))
         for c in circles:
-            f.write("({a},{b},{r})\n".format(a=c[0], b=c[1], r=c[2]))
+            f.write("{a} {b} {r}\n".format(a=c[0], b=c[1], r=c[2]))
 
 
+# TODO: Remove if not used
 def draw_on_top(base_image, image_to_draw, ignore=0):
     h, w = base_image.shape
     hn, wn = image_to_draw.shape
@@ -56,29 +58,20 @@ def main():
     image = read_image(image_file)
 
     edges_image = detect_edges(image, threshold_val, blur_val)
+    lines = detect_lines(edges_image)
     circles = detect_circles(edges_image)
 
-    # TODO: Remove code comments
-    # empty_image = create_empty_img(image.shape[0], image.shape[1])
-
-    for (a, b, r) in circles:
-        # print("({},{},{})".format(a, b, r))
-        # cv.circle(empty_image, (a, b), r, DETECTED_CIRCLE_COLOR, 1)
-        cv.circle(image, (a, b), r, DETECTED_CIRCLE_COLOR, 1)
-
-    # display_image(empty_image)
-
-    # draw_on_top(image, edges_image)
+    draw_lines_on_img(lines, image)
+    draw_circles_on_img(circles, image)
 
     display_image(image)
     save_image(image)
 
-    lines = []  # TODO
     write_log_file(lines, circles, output_file)
 
 
 if __name__ == "__main__":
-    argv.append("potatos.jpg")
+    argv.append("two_circles.png")
     argv.append("output.txt")
     argv.append("100")  # threshold
     argv.append("5")  # blurring
