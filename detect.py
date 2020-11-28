@@ -31,7 +31,7 @@ def write_log_file(lines, circles, output_file_path):
     with open(output_file_path, "w") as f:
         # TODO: Print lines
         for c in circles:
-            f.write("({a},{b},{r})".format(a=c[0], b=c[1], r=c[2]))
+            f.write("({a},{b},{r})\n".format(a=c[0], b=c[1], r=c[2]))
 
 
 def draw_on_top(base_image, image_to_draw, ignore=0):
