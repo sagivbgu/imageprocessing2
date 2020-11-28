@@ -1,6 +1,10 @@
 from sys import argv
 import cv2 as cv
+
+from circles import detect_circles
 from edge import *
+
+DETECTED_CIRCLE_COLOR = (150, 0, 0)
 
 
 def read_image(file):
@@ -23,8 +27,11 @@ def display_image(img):
     cv.waitKey(0)
 
 
-def write_log_file(output):
-    pass
+def write_log_file(lines, circles, output_file_path):
+    with open(output_file_path, "w") as f:
+        # TODO: Print lines
+        for c in circles:
+            f.write("({a},{b},{r})".format(a=c[0], b=c[1], r=c[2]))
 
 
 def draw_on_top(base_image, image_to_draw, ignore=0):
@@ -49,13 +56,25 @@ def main():
     image = read_image(image_file)
 
     edges_image = detect_edges(image, threshold_val, blur_val)
-    draw_on_top(image, edges_image)
+    circles = detect_circles(edges_image)
 
-    save_image(image)
+    # TODO: Remove code comments
+    # empty_image = create_empty_img(image.shape[0], image.shape[1])
+
+    for (a, b, r) in circles:
+        # print("({},{},{})".format(a, b, r))
+        # cv.circle(empty_image, (a, b), r, DETECTED_CIRCLE_COLOR, 1)
+        cv.circle(image, (a, b), r, DETECTED_CIRCLE_COLOR, 1)
+
+    # display_image(empty_image)
+
+    # draw_on_top(image, edges_image)
+
     display_image(image)
-    display_image(edges_image)
+    save_image(image)
 
-    write_log_file(output_file)
+    lines = []  # TODO
+    write_log_file(lines, circles, output_file)
 
 
 if __name__ == "__main__":
