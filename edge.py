@@ -21,40 +21,13 @@ def blur_image(img, val=5):
 
 
 def apply_edge_detection(img):
-    """
-    :param img: a padded image
-    :return:
-    """
-    height, width = img.shape
-    new_image = create_empty_img(height, width)
+    grad_x = cv.Sobel(img, cv.CV_16S, 1, 0, ksize=3, scale=1, delta=0, borderType=cv.BORDER_DEFAULT)
+    grad_y = cv.Sobel(img, cv.CV_16S, 0, 1, ksize=3, scale=1, delta=0, borderType=cv.BORDER_DEFAULT)
 
-    sobel_edge_detection_on_x = np.float32([[-1, 0, 1],
-                                            [-2, 0, 2],
-                                            [-1, 0, 1]])
+    abs_grad_x = cv.convertScaleAbs(grad_x)
+    abs_grad_y = cv.convertScaleAbs(grad_y)
 
-    sobel_edge_detection_on_y = np.float32([[1, 2, 1],
-                                            [0, 0, 0],
-                                            [-1, -2, -1]])
-
-    for y in range(PADDING, height - PADDING):
-        for x in range(PADDING, width - PADDING):
-            # Get all the 9 pixels area around the current pixel
-            roi = img[y - 1: y + 2, x - 1: x + 2]
-            gx = apply_filter(sobel_edge_detection_on_x, roi)
-            gy = apply_filter(sobel_edge_detection_on_y, roi)
-            g = ((gx ** 2) + (gy ** 2)) ** 0.5
-            new_image[y][x] = g
-
-    return new_image
-
-
-def apply_filter(filter, roi):
-    """
-    :param filter:
-    :param roi:
-    :return:
-    """
-    return np.dot(np.float32(filter).flatten(), np.float32(roi).flatten())
+    return cv.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
 
 
 def add_padding_to_image(img, add_h=PADDING, add_w=PADDING):
@@ -124,11 +97,6 @@ def apply_threshold(img, val=127):
 
 
 def apply_dilation(img):
-    """
-
-    :param img: a padded image after Sober and threshold applied
-    :return:
-    """
     height, width = img.shape
     new_image = create_empty_img(height, width)
 
@@ -170,79 +138,5 @@ def apply_thinning(img):
         temp_image = erode.copy()
 
     return thin
-
-def apply_thinning_old(img):
-    # Algorithm by
-    # https://homepages.inf.ed.ac.uk/rbf/HIPR2/thin.htm
-    #
-    # Try each of the 8 masks on each pixel
-    # if one of them returns white - set the pixel to white
-    # otherwise - set the pixel to black
-
-    height, width = img.shape
-    new_image = create_empty_img(height, width)
-
-    mask_1 = {"whites": [(2, 0), (2, 1), (2, 2)],
-              "blacks": [(0, 0), (0, 1), (0, 2)]}
-
-    mask_2 = {"whites": [(0, 0), (1, 0), (2, 0)],
-              "blacks": [(0, 2), (1, 2), (2, 2)]}
-
-    mask_3 = {"whites": [(0, 0), (0, 1), (0, 2)],
-              "blacks": [(2, 0), (2, 1), (2, 2)]}
-
-    mask_4 = {"whites": [(0, 2), (1, 2), (2, 2)],
-              "blacks": [(0, 0), (1, 0), (2, 0)]}
-
-    mask_5 = {"whites": [(1, 0), (2, 1)],
-              "blacks": [(0, 1), (0, 2), (1, 2)]}
-
-    mask_6 = {"whites": [(0, 1), (1, 0)],
-              "blacks": [(1, 2), (2, 2), (2, 1)]}
-
-    mask_7 = {"whites": [(0, 1), (1, 2)],
-              "blacks": [(1, 0), (2, 0), (2, 1)]}
-
-    mask_8 = {"whites": [(1, 2), (2, 1)],
-              "blacks": [(0, 0), (0, 1), (1, 0)]}
-
-    masks = [mask_1, mask_2, mask_3, mask_4, mask_5, mask_6, mask_7, mask_8]
-
-    for y in range(PADDING, height - PADDING):
-        for x in range(PADDING, width - PADDING):
-            # consider only white pixels:
-            if img[y][x] == 0:
-                continue
-
-            # Get all the 9 pixels area around the current pixel
-            roi = img[y - 1: y + 2, x - 1: x + 2]
-            val = 0
-
-            for mask in masks:
-                val = try_mask(roi, mask["whites"], mask["blacks"])
-                # if one mask returned white, then the pixel should be white
-                # and there is no point to check the rest
-                if val == 255:
-                    break
-
-            new_image[y][x] = val
-
-    return new_image
-
-
-def try_mask(roi, whites, blacks):
-    # whites is an array of tuples (y,x) of the locations of the white pixels to check
-    for (y, x) in whites:
-        # if one white does not match, set the center pixel to black
-        if roi[y][x] != 255:
-            return 0
-
-    for (y, x) in blacks:
-        if roi[y][x] != 0:
-            return 0
-
-    return 255
-
-
 
 
