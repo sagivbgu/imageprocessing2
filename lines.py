@@ -62,7 +62,7 @@ def detect_lines(img):
 
     lines_coordinates = calc_edges_points_of_lines(lines_coordinates, img)
 
-    return lines_coordinates
+    return remove_dups(lines_coordinates)
 
 
 def draw_lines_on_img(coordinates, img):
@@ -208,3 +208,6 @@ def calc_edges_points_of_lines(lines, img):
 
 def is_intercept_valid(x, max_val):
     return (x >= 0) and (x < max_val)
+
+def remove_dups(lines):
+    return list(set(lines))
