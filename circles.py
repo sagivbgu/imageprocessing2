@@ -122,5 +122,7 @@ def close_points(p1, p2):
 
 
 def draw_circles_on_img(circles, img):
+    if len(circles) == 0:
+        return
     for (a, b, r) in circles:
         cv.circle(img, (a, b), r, DETECTED_CIRCLE_COLOR, 1)

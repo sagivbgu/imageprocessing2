@@ -16,7 +16,7 @@ def get_loaded_image_name():
 
 def save_image(img):
     name = get_loaded_image_name()
-    file_name = "{0}_edge_thresh{1}_blur{2}.png".format(name, argv[3], argv[4])
+    file_name = "{0}_after_detection.png".format(name)
     cv.imwrite(file_name, img)
 
 
@@ -56,7 +56,8 @@ def main():
     image = read_image(image_file)
 
     print("Detecting edges", end="")
-    edges_image = detect_edges(image, threshold_val=100, blur_val=5)
+    # edges_image = detect_edges(image, threshold_val=100, blur_val=5)
+    edges_image = image
     print(" - Done!")
 
     print("Detecting lines", end="")
@@ -64,9 +65,12 @@ def main():
     print(" - Done!")
 
     print("Detecting circles", end="")
-    circles = detect_circles(edges_image)
+    # circles = detect_circles(edges_image)
+    circles = []
     print(" - Done!")
-    
+
+    image = cv.cvtColor(image, cv.COLOR_GRAY2RGB)
+
     draw_lines_on_img(lines, image)
     draw_circles_on_img(circles, image)
 
@@ -77,6 +81,8 @@ def main():
 
 
 if __name__ == "__main__":
+    argv.append("one_diagonal_line.png")
+    argv.append("output.txt")
     if len(argv) != 3:
         print("Usage: {0} [image] [output]".format(argv[0]))
         exit()
