@@ -52,15 +52,21 @@ def draw_on_top(base_image, image_to_draw, ignore=0):
 def main():
     image_file = argv[1]
     output_file = argv[2]
-    threshold_val = int(argv[3])
-    blur_val = int(argv[4])
 
     image = read_image(image_file)
 
-    edges_image = detect_edges(image, threshold_val, blur_val)
-    lines = detect_lines(edges_image)
-    circles = detect_circles(edges_image)
+    print("Detecting edges", end="")
+    edges_image = detect_edges(image, threshold_val=100, blur_val=5)
+    print(" - Done!")
 
+    print("Detecting lines", end="")
+    lines = detect_lines(edges_image)
+    print(" - Done!")
+
+    print("Detecting circles", end="")
+    circles = detect_circles(edges_image)
+    print(" - Done!")
+    
     draw_lines_on_img(lines, image)
     draw_circles_on_img(circles, image)
 
@@ -71,13 +77,7 @@ def main():
 
 
 if __name__ == "__main__":
-    argv.append("two_circles.png")
-    argv.append("output.txt")
-    argv.append("100")  # threshold
-    argv.append("5")  # blurring
-
-    # if len(argv) != 3: # TODO: commented out for debugging
-    if len(argv) != 5:
+    if len(argv) != 3:
         print("Usage: {0} [image] [output]".format(argv[0]))
         exit()
 
