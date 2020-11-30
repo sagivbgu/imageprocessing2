@@ -2,14 +2,21 @@ import numpy as np
 import cv2 as cv
 import math
 
+"""
+The threshold for lines in the Hough matrix is calculated as:
+20 percent of the number of edges pixels in the image 
+
+"""
+
 
 class HoughMatrix2D:
-    def __init__(self, img_height, img_width, rho_quanta=2, theta_quanta=(math.pi / 90)):
+    def __init__(self, img, rho_quanta=1, theta_quanta=(math.pi / 90)):
+        self._img = img
         self._threshold = 0
 
-        self._img_height = img_height
-        self._img_width = img_width
-        self.img_diagonal = math.ceil(math.sqrt(img_height ** 2 + img_width ** 2))
+        self._img_height = img.shape[0]
+        self._img_width = img.shape[1]
+        self.img_diagonal = math.ceil(math.sqrt(self._img_height ** 2 + self._img_width ** 2))
 
         self.rho_quanta = rho_quanta
         self.rho_min = self._transform_rho(- self.img_diagonal)
@@ -38,7 +45,7 @@ class HoughMatrix2D:
         return int((rho + self.img_diagonal) // self.rho_quanta)
 
     def _inverse_rho(self, index):
-        return ((index * 2) - self.img_diagonal)
+        return (index * self.rho_quanta) - self.img_diagonal
 
     def _transform_theta(self, theta):
         new_theta = (theta + math.pi) / self.theta_quanta
@@ -51,8 +58,8 @@ class HoughMatrix2D:
         return x * math.cos(theta) + y * math.sin(theta)
 
     def _calc_threshold(self):
-        # TODO: maybe better than this
-        self._threshold = np.amax(self._mat) * 1 / 2
+        num_of_pixels = np.count_nonzero(self._img)
+        self._threshold = num_of_pixels * 0.2
 
 
 def detect_lines(img):
