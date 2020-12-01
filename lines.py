@@ -2,9 +2,11 @@ import numpy as np
 import cv2 as cv
 import math
 from numpy.linalg import norm
+from sys import maxsize
+
 """
 The threshold for lines in the Hough matrix is calculated as:
-all the lines that got at least half of the maximum number of votes
+all the lines that got at least 25% of the maximum number of votes
 
 """
 np.seterr('raise')
@@ -20,7 +22,7 @@ class Line:
         self.points = points  # will hold the array of points
 
         self.points.sort()
-        self.start = self.points[0] if len(points) > 0 else None # always with the smaller x
+        self.start = self.points[0] if len(points) > 0 else None  # always with the smaller x
         self.end = self.points[-1] if len(points) > 0 else None  # always with the larger x
         self.calc_slope_and_intercept()
 
@@ -38,6 +40,11 @@ class Line:
             return len(self.points)
         if self.tag == "gap":
             return norm(np.asarray(self.start) - np.asarray(self.end)) + 1
+
+    def recalc_start_and_end_points(self):
+        self.points.sort()
+        self.start = self.points[0]
+        self.end = self.points[-1]
 
     def calc_start_and_end_points(self):
         if self.start is None:
@@ -71,9 +78,12 @@ class Line:
     def is_segment(self):
         return self.tag == "segment"
 
+    def is_gap(self):
+        return self.tag == "gap"
+
 
 class HoughMatrix2D:
-    def __init__(self, img, rho_quanta=3, theta_quanta=(math.pi / 90)):
+    def __init__(self, img, rho_quanta=1, theta_quanta=(math.pi / 180)):
         self._img = img
         self._threshold = 0
 
@@ -123,9 +133,9 @@ class HoughMatrix2D:
         return x * math.cos(theta) + y * math.sin(theta)
 
     def _calc_threshold(self):
-        #num_of_pixels = np.count_nonzero(self._img)
-        #self._threshold = num_of_pixels * 0.2
-        self._threshold = np.amax(self._mat_of_votes) / 2
+        #  num_of_pixels = np.count_nonzero(self._img)
+        #  self._threshold = num_of_pixels * 0.2
+        self._threshold = np.amax(self._mat_of_votes) / 4
 
 
 def detect_lines(img):
@@ -137,6 +147,8 @@ def detect_lines(img):
         print(" - No lines detected", end="")
         return []
 
+    lines = remove_duplicate_lines(lines)
+
     lines = calc_edges_points_of_lines_and_eliminate_outofimage_lines(lines, img)
 
     lines_divided_into_segments = calc_lines_segments(lines)
@@ -145,14 +157,14 @@ def detect_lines(img):
 
     lines_united_segments = unite_lines_segments(lines_divided_into_segments_and_gaps)
 
-    lines_without_close_segments = eliminate_too_close_segments(lines_divided_into_segments_and_gaps)
+    lines_without_close_segments = eliminate_too_close_segments(lines_united_segments)
 
     # Flatten all segments
     segments = [segment for line in lines_without_close_segments for segment in line]
 
     segments_start_and_end_points = extract_start_and_end_points(segments)
 
-    # remove_dups
+    # remove_duplicates
     segments_start_and_end_points = list(set(segments_start_and_end_points))
 
     return segments_start_and_end_points
@@ -257,7 +269,7 @@ def calc_edges_points_of_lines_and_eliminate_outofimage_lines(lines, img):
                     a = (intercept_with_bottom_side, height - 1)
                     b = (0, line.c)
                 # BOTTOM and RIGHT
-                if is_intercept_valid(intercept_with_right_side, height):
+                elif is_intercept_valid(intercept_with_right_side, height):
                     a = (intercept_with_bottom_side, height - 1)
                     b = (width - 1, intercept_with_right_side)
                 else:
@@ -287,27 +299,49 @@ def is_intercept_valid(x, max_val):
     return (x >= 0) and (x < max_val)
 
 
+def distance_between_two_points(point1, point2):
+    x1, y1 = point1
+    x2, y2 = point2
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
 def distance_between_point_and_line(point, line):
     x, y = point
     line.calc_slope_and_intercept()
     # if the line is vertical
     if line.m is None:
         x_line = line.start[0]
-        return abs(x - x_line)
+        # return abs(x - x_line)
+        x_intersect = x_line
+        y_intersect = y
 
     # if the line is horizontal
-    if line.m == 0:
+    elif line.m == 0:
         y_line = line.start[1]
-        return abs(y - y_line)
+        # return abs(y - y_line)
+        x_intersect = x
+        y_intersect = y_line
 
-    orth_line_m = -1 / line.m
-    orth_line_c = y - (orth_line_m * x)
+    # the line is ordinary
+    else:
+        orth_line_m = -1 / line.m
+        orth_line_c = y - (orth_line_m * x)
 
-    x_intersect = (orth_line_c - line.c) / (line.m - orth_line_m)
-    y_intersect = orth_line_m * x_intersect + orth_line_c
+        x_intersect = (orth_line_c - line.c) / (line.m - orth_line_m)
+        y_intersect = orth_line_m * x_intersect + orth_line_c
 
-    #return norm(np.asarray(point) - np.asarray((x_intersect, y_intersect)))
-    return math.sqrt((x - x_intersect) ** 2 + (y - y_intersect) ** 2)
+    # if the intersection is not ON the line -
+    # the distance doesn't matter
+    if not (line.start[0] <= x_intersect <= line.end[0] and
+            (line.start[1] <= y_intersect <= line.end[1] or
+                line.start[1] >= y_intersect >= line.end[1])):
+        return maxsize
+
+    # the intersection is ON the line, so calc the distance
+
+    #  return norm(np.asarray(point) - np.asarray((x_intersect, y_intersect)))
+    #  return math.sqrt((x - x_intersect) ** 2 + (y - y_intersect) ** 2)
+    return distance_between_two_points((x, y), (x_intersect, y_intersect))
 
 
 def distance_between_point_and_line_old(point, line):
@@ -355,7 +389,21 @@ def are_lines_the_same(line1, line2):
     return True
 
 
+def is_point_between_two_points(p, a, b):
+    return a[0] <= p[0] <= b[0] and (a[1] <= p[1] <= b[1] or a[1] >= p[1] >= b[1])
+
+
 def are_lines_at_least_two_pixels_apart(line1, line2):
+    # First, let's check if they are parallel and deal with this situation
+    if line1.theta == line2.theta:
+        # compare start and end points
+        # if one of the edge points is too close - they are close
+        if (distance_between_point_and_line(line1.start, line2) <= 2) or \
+            (distance_between_point_and_line(line1.end, line2) <= 2) or \
+            (distance_between_point_and_line(line2.start, line1) <= 2) or \
+                (distance_between_point_and_line(line2.end, line1) <= 2):
+            return False
+
     line1_far = False
     line2_far = False
 
@@ -516,20 +564,6 @@ def eliminate_too_close_segments_between_two_lines(line1, line2):
     if are_lines_the_same(line1, line2):
         return line1, None
 
-    # a very simple method for elimination
-    eliminated = []
-    new_segments = []
-
-    def add_segment(seg):
-        if (seg not in new_segments) and (seg not in eliminated):
-            new_segments.append(seg)
-
-    def remove_segment(seg):
-        if seg in new_segments:
-            new_segments.remove(seg)
-        if seg not in eliminated:
-            eliminated.append(seg)
-
     for seg1 in line1:
         # consider only segments and not gaps
         if not seg1.is_segment():
@@ -554,19 +588,76 @@ def eliminate_too_close_segments_between_two_lines(line1, line2):
 
 
 def eliminate_too_close_segments(lines):
-    new_lines = []
-    for line1 in lines:
-        for line2 in lines[1:]:
+    new_lines = lines
+
+    for i in range(len(new_lines)):
+        line1 = new_lines[i]
+        rest_of_lines = new_lines[i + 1:]
+
+        for j in range(len(rest_of_lines)):
+            line2 = rest_of_lines[j]
+
             line1, line2 = eliminate_too_close_segments_between_two_lines(line1, line2)
-            new_lines.append(line1)
-            if line2 is not None:
-                new_lines.append(line2)
 
     return new_lines
 
 
 def unite_line_segments(line):
-    return line
+    # line has no gaps
+    if len(line) == 1:
+        return line
+
+    if len(line) % 2 == 0:
+        raise Exception("len of line is even? means it can't be in form of seg-gap-seg...")
+
+    # calc total length of line, gaps and segments
+    line_length = 0
+    segments_length = 0
+    gaps_length = 0
+    for item in line:
+        line_length += item.length()
+        if item.is_segment():
+            segments_length += item.length()
+        else:
+            gaps_length += item.length()
+
+    new_line = []
+
+    current_segment = line[0]
+
+    united_segment = Line(current_segment.rho, current_segment.theta, current_segment.points)
+    united_segment.set_segment()
+    new_line.append(united_segment)
+
+    for i in range(len(line)):
+        if line[i].is_gap():
+            gap = line[i]
+            prev_seg = line[i - 1]
+            next_seg = line[i + 1]
+
+            # if it is a very small "mistake" - unite
+            if gap.length() + prev_seg.length() + next_seg.length() <= 10:
+                united_segment.points += next_seg.points
+
+            # if gap is really small compare to its neighbour segments
+            elif gap.length() <= (prev_seg.length() + next_seg.length()) / 10:
+                united_segment.points += gap.points
+                united_segment.points += next_seg.points
+
+            # the gap is significant
+            else:
+                # wrap_up previous united segment
+                united_segment.recalc_start_and_end_points()
+
+                # create a new segment
+                united_segment = Line(next_seg.rho, next_seg.theta, next_seg.points)
+                united_segment.set_segment()
+                new_line.append(united_segment)
+
+        # wrap_up previous united segment
+        united_segment.recalc_start_and_end_points()
+
+    return new_line
 
 
 def unite_lines_segments(lines):
@@ -574,3 +665,28 @@ def unite_lines_segments(lines):
     for line in lines:
         new_line = unite_line_segments(line)
         new_lines.append(new_line)
+
+    return new_lines
+
+
+def remove_duplicate_lines(lines):
+    new_lines = lines
+
+    for i in range(len(new_lines)):
+        line1 = new_lines[i]
+        # means it was deleted previously
+        if line1 is None:
+            continue
+
+        rest_of_lines = new_lines[i + 1:]
+
+        for j in range(len(rest_of_lines)):
+            line2 = rest_of_lines[j]
+            # means it was deleted previously
+            if line2 is None:
+                continue
+            if are_lines_the_same(line1, line2):
+                k = new_lines.index(line2)
+                new_lines[k] = None
+
+    return [line for line in new_lines if line is not None]
