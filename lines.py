@@ -21,7 +21,7 @@ class Line:
         self.tag = "line"  # can be "line", "segment", "gap"
         self.points = points  # will hold the array of points
 
-        self.points.sort()
+        self.points.sort()  # First by X and then by Y
         self.start = self.points[0] if len(points) > 0 else None  # always with the smaller x
         self.end = self.points[-1] if len(points) > 0 else None  # always with the larger x
         self.calc_slope_and_intercept()
@@ -161,6 +161,8 @@ def detect_lines(img):
 
     # Flatten all segments
     segments = [segment for line in lines_without_close_segments for segment in line]
+
+    segments = remove_too_short_segments(segments, np.count_nonzero(img) / 100)
 
     segments_start_and_end_points = extract_start_and_end_points(segments)
 
@@ -690,3 +692,12 @@ def remove_duplicate_lines(lines):
                 new_lines[k] = None
 
     return [line for line in new_lines if line is not None]
+
+
+def remove_too_short_segments(segments, threshold):
+    new_segments = []
+    for seg in segments:
+        if seg.length() > threshold:
+            new_segments.append(seg)
+
+    return new_segments
