@@ -26,9 +26,6 @@ class Line:
         self.end = self.points[-1] if len(points) > 0 else None  # always with the larger x
         self.calc_slope_and_intercept()
 
-        self.edge_point_1 = None
-        self.edge_point_2 = None
-
     def width(self):
         return abs(self.start[0] - self.end[0])
 
@@ -83,7 +80,7 @@ class Line:
 
 
 class HoughMatrix2D:
-    def __init__(self, img, rho_quanta=1, theta_quanta=(math.pi / 180)):
+    def __init__(self, img, rho_quanta=2, theta_quanta=(math.pi / 90)):
         self._img = img
         self._threshold = 0
 
@@ -149,8 +146,6 @@ def detect_lines(img):
 
     lines = remove_duplicate_lines(lines)
 
-    lines = calc_edges_points_of_lines_and_eliminate_outofimage_lines(lines, img)
-
     lines_divided_into_segments = calc_lines_segments(lines)
 
     lines_divided_into_segments_and_gaps = calc_lines_gaps(lines_divided_into_segments)
@@ -162,11 +157,15 @@ def detect_lines(img):
     # Flatten all segments
     segments = [segment for line in lines_without_close_segments for segment in line]
 
+    # segments = eliminate_too_close_segments_2(segments)
+
+    # according to clarifications - the length of a line must be at least 1%
+    # of all edges points
     segments = remove_too_short_segments(segments, np.count_nonzero(img) / 100)
 
     segments_start_and_end_points = extract_start_and_end_points(segments)
 
-    # remove_duplicates
+    # remove duplicates
     segments_start_and_end_points = list(set(segments_start_and_end_points))
 
     return segments_start_and_end_points
@@ -219,82 +218,6 @@ def calc_line_coordinates(rho, theta, width, height):
     y2 = int(y0 - 2 * height * a)
 
     return (x1, y1), (x2, y2)
-
-
-def calc_edges_points_of_lines_and_eliminate_outofimage_lines(lines, img):
-    height, width = img.shape
-
-    new_lines = []
-
-    for line in lines:
-        x1, y1 = line.start
-
-        # if vertical
-        if line.m is None:
-            if is_intercept_valid(x1, width):
-                a = (x1, 0)
-                b = (x1, height - 1)
-            else:
-                continue
-
-        # if horizontal
-        elif line.m == 0:
-            if is_intercept_valid(line.c, height):
-                a = (0, line.c)
-                b = (width - 1, line.c)
-            else:
-                continue
-
-        else:
-            intercept_with_x = -line.c / line.m  # y = 0
-            intercept_with_bottom_side = ((height - 1) - line.c) / line.m  # y = (height - 1)
-            intercept_with_right_side = line.m * (width - 1) + line.c  # x = (width - 1)
-
-            if is_intercept_valid(intercept_with_x, width):
-                # TOP and LEFT
-                if is_intercept_valid(line.c, height):
-                    a = (intercept_with_x, 0)
-                    b = (0, line.c)
-                # TOP and RIGHT
-                elif is_intercept_valid(intercept_with_right_side, height):
-                    a = (intercept_with_x, 0)
-                    b = (width - 1, intercept_with_right_side)
-                # TOP and BOTTOM
-                elif is_intercept_valid(intercept_with_bottom_side, width):
-                    a = (intercept_with_x, 0)
-                    b = (intercept_with_bottom_side, 0)
-                else:
-                    continue
-            elif is_intercept_valid(intercept_with_bottom_side, width):
-                # BOTTOM and LEFT
-                if is_intercept_valid(line.c, height):
-                    a = (intercept_with_bottom_side, height - 1)
-                    b = (0, line.c)
-                # BOTTOM and RIGHT
-                elif is_intercept_valid(intercept_with_right_side, height):
-                    a = (intercept_with_bottom_side, height - 1)
-                    b = (width - 1, intercept_with_right_side)
-                else:
-                    continue
-            elif is_intercept_valid(line.c, height):
-                # LEFT and RIGHT
-                if is_intercept_valid(intercept_with_right_side, height):
-                    a = (0, line.c)
-                    b = (width - 1, intercept_with_right_side)
-                else:
-                    continue
-            else:
-                continue
-
-        x1, y1 = a
-        x2, y2 = b
-
-        line.edge_point_1 = (int(x1), int(y1))
-        line.edge_point_2 = (int(x2), int(y2))
-
-        new_lines.append(line)
-
-    return new_lines
 
 
 def is_intercept_valid(x, max_val):

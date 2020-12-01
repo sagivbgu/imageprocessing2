@@ -4,7 +4,7 @@ import cv2 as cv
 
 from utils import get_pixels_with_value
 
-DETECTED_CIRCLE_COLOR = (255, 255, 0)
+DETECTED_CIRCLE_COLOR = (0, 255, 255)
 
 """
 Parametric equation of a circle:

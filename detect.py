@@ -65,7 +65,8 @@ def main():
     print(" - Done!")
 
     print("Detecting circles", end="")
-    circles = detect_circles(edges_image)
+    #circles = detect_circles(edges_image)
+    circles = []
     print(" - Done!")
 
     image = cv.cvtColor(image, cv.COLOR_GRAY2RGB)
@@ -80,7 +81,7 @@ def main():
 
 
 if __name__ == "__main__":
-    argv.append("many_lines.png")
+    argv.append("one_diagonal_line.png")
     argv.append("output.txt")
     if len(argv) != 3:
         print("Usage: {0} [image] [output]".format(argv[0]))
