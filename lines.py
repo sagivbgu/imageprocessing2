@@ -132,8 +132,6 @@ class HoughMatrix2D:
         - the range of rho is [-d , d], when d = length of the diagonal
         - the range of theta is [-pi , pi]
         - the (0,0) point is on the Top Left
-
-
     """
     def __init__(self, img, rho_quanta=1, theta_quanta=(math.pi / 180)):
         self._img = img
@@ -151,7 +149,7 @@ class HoughMatrix2D:
         self.theta_min = self._transform_theta(- math.pi)
         self.theta_max = self._transform_theta(math.pi)
 
-        # As explained above, we have to matrices - one for votes, and one the hold the voters
+        # As explained above, we have two matrices - one for votes, and one that hold the voters
         self._mat_of_votes = np.zeros((self.rho_max, self.theta_max))
         self._mat_of_points = [[[] for _ in range(self.theta_max)] for _ in range(self.rho_max)]
 
@@ -208,7 +206,6 @@ def detect_lines(img):
     lines = get_lines_from_hough_matrix(hough_mat)
 
     if len(lines) == 0:
-        print(" - No lines detected", end="")
         return []
 
     lines = remove_duplicate_lines(lines)
@@ -327,7 +324,7 @@ def are_lines_the_same(line1, line2):
 
 def are_segments_at_least_two_pixels_apart(line1, line2):
     # First, let's check if they are parallel and deal with this situation:
-    # if two lines are parallel, we want to eliminate only if (1) they"overlap" -
+    # if two lines are parallel, we want to eliminate only if (1) they "overlap" -
     # meaning, they share a common range of Xs or Ys, like that:
     #
     #   line1=          ******************
@@ -395,7 +392,7 @@ def find_line_segments(line):
     segment.set_segment()
     line_segments.append(segment)
 
-    # add the first point of the line
+    # Add the first point of the line
     cur_point = line.start
     segment.points.append(cur_point)
 
@@ -427,12 +424,7 @@ def find_line_segments(line):
 
 
 def find_lines_segments(lines):
-    new_lines = []
-    for line in lines:
-        segments_of_line = find_line_segments(line)  # TODO: segments_of_line
-        new_lines.append(segments_of_line)
-
-    return new_lines
+    return [find_line_segments(line) for line in lines]
 
 
 def find_gap_between_segments(seg1, seg2):
@@ -440,8 +432,8 @@ def find_gap_between_segments(seg1, seg2):
     gap.set_gap()
 
     # At first, set the start of the gap as the end point of segment 1
-    # and the end point of the gap as the start pint of segment 2
-    # We use an array and not tuple because its mutable
+    # and the end point of the gap as the start point of segment 2
+    # We use a list and not tuple because it's mutable
     start = [seg1.end[0], seg1.end[1]]
     end = [seg2.start[0], seg2.start[1]]
 
@@ -468,7 +460,7 @@ def find_gap_between_segments(seg1, seg2):
 
 def find_line_gaps(line):
     # line is now an array of segments
-    # this method transform it to an array of [seg1, gap1, seg2, gap2,...,gap(n-1), segn]
+    # this method transforms it to an array of [seg1, gap1, seg2, gap2,...,gap(n-1), segn]
 
     # if there is a single segment, that's the line - there are no gaps
     if len(line) == 1:
@@ -490,21 +482,12 @@ def find_line_gaps(line):
 
 
 def find_lines_gaps(lines):
-    new_lines = []
-    for line in lines:
-        segments_and_gaps_of_line = find_line_gaps(line)
-        new_lines.append(segments_and_gaps_of_line)
-
-    return new_lines
+    return [find_line_gaps(line) for line in lines]
 
 
 def extract_start_and_end_points(segments):
-    segments_start_and_end_points = []
-
-    for seg in segments:
-        segments_start_and_end_points.append((seg.start, seg.end))
-
-    return list(set(segments_start_and_end_points))
+    segments_start_and_end_points = {(seg.start, seg.end) for seg in segments}
+    return list(segments_start_and_end_points)
 
 
 def eliminate_too_close_segments_between_two_lines(line1, line2):
@@ -568,7 +551,7 @@ def unite_line_segments(line):
             if gap.length() + prev_seg.length() + next_seg.length() <= 10:
                 united_segment.points += next_seg.points
 
-            # if gap is really small compare to its neighbour segments
+            # if gap is really small compared to its neighbour segments
             elif gap.length() <= (prev_seg.length() + next_seg.length()) / 10:
                 united_segment.points += next_seg.points
 
@@ -589,12 +572,7 @@ def unite_line_segments(line):
 
 
 def unite_lines_segments(lines):
-    new_lines = []
-    for line in lines:
-        new_line = unite_line_segments(line)
-        new_lines.append(new_line)
-
-    return new_lines
+    return [unite_line_segments(line) for line in lines]
 
 
 def remove_duplicate_lines(lines):
@@ -620,9 +598,4 @@ def remove_duplicate_lines(lines):
 
 
 def remove_too_short_segments(segments, threshold):
-    new_segments = []
-    for seg in segments:
-        if seg.length() > math.ceil(threshold):
-            new_segments.append(seg)
-
-    return new_segments
+    return [seg for seg in segments if seg.length() > math.ceil(threshold)]
