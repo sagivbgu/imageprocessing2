@@ -22,8 +22,8 @@ def save_image(img):
 
 def display_images(img, edges_image):
     name = get_loaded_image_name()
-    cv.imshow(name, img)
-    cv.imshow(name + "_edges", edges_image)
+    cv.imshow("Lines and circles: {}".format(name), img)
+    cv.imshow("After edge detection: {}".format(name), edges_image)
     cv.waitKey(0)
 
 
