@@ -30,13 +30,15 @@ Explanation about the code:
     now a line is an array of segments and gaps of the form [seg1, gap1, seg2, gap2,...,gap(n-1), segn]
 
 7) Now, we go over each line and deciding whether two segments should be united into one large segment.
-    This happens when the gap between two segments is relatively short, or when the segments
-    and the gap in between are short altogether (this usually happens in diagonal lines, where 
-    the length of segments and gaps tend to be really small ~2-3 pixels each)
+    This happens when 
+    - the gap between two segments is relatively short (according to clarifications - less than 10 percent)
+    - or when the segments and the gap in between are short altogether (this usually happens in diagonal lines, where 
+      the length of segments and gaps tend to be really small ~2-3 pixels each)
 
-8) We now remove all the segments that are too close to each other (less than 2 pixels apart)
+8) We now remove all the segments that are too close to each other (according to clarifications - less than 5 pixels 
+    apart)
 
-9) We filter out all the short segments (with less than 1% of edge points)
+9) We filter out all the short segments (according to clarifications - with less than 1% of edge points)
 
 10) Returning the start and end points of all the segments
     
@@ -554,7 +556,8 @@ def unite_line_segments(line):
             if gap.length() + prev_seg.length() + next_seg.length() <= 10:
                 united_segment.points += next_seg.points
 
-            # if gap is really small compared to its neighbour segments
+            # if gap is really small compared to its neighbour segments -
+            # less than 10% (according to clarifications)
             elif gap.length() <= (prev_seg.length() + next_seg.length()) / 10:
                 united_segment.points += next_seg.points
 
