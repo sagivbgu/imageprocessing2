@@ -20,9 +20,10 @@ def save_image(img):
     cv.imwrite(file_name, img)
 
 
-def display_image(img):
+def display_images(img, edges_image):
     name = get_loaded_image_name()
     cv.imshow(name, img)
+    cv.imshow(name + "_edges", edges_image)
     cv.waitKey(0)
 
 
@@ -33,20 +34,6 @@ def write_log_file(lines, circles, output_file_path):
             f.write("{x1} {y1} {x2} {y2}\n".format(x1=p1[0], y1=p1[1], x2=p2[0], y2=p2[1]))
         for c in circles:
             f.write("{a} {b} {r}\n".format(a=c[0], b=c[1], r=c[2]))
-
-
-# TODO: Remove if not used
-def draw_on_top(base_image, image_to_draw, ignore=0):
-    h, w = base_image.shape
-    hn, wn = image_to_draw.shape
-
-    if hn != h or wn != w:
-        raise ValueError("Can't draw image on top of an image with different dimensions")
-
-    for y in range(h):
-        for x in range(w):
-            if image_to_draw[y][x] != ignore:
-                base_image[y][x] = image_to_draw[y][x]
 
 
 def main():
@@ -76,11 +63,12 @@ def main():
     write_log_file(lines, circles, output_file)
 
     save_image(image)
-    display_image(image)
+    display_images(image, edges_image)
 
 
 if __name__ == "__main__":
-    argv.append("one_diagonal_line.png")
+    # TODO: remove before submission
+    argv.append("many_lines.png")
     argv.append("output.txt")
     if len(argv) != 3:
         print("Usage: {0} [image] [output]".format(argv[0]))
