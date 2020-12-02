@@ -1,7 +1,7 @@
 import math
 import cv2 as cv
 
-THRESHOLD = 0.4  # Used to choose votes from the hough matrix.
+THRESHOLD = 0.5  # Used to choose votes from the hough matrix.
                  # If the amount of votes > the circle's perimeter * THRESHOLD, then draw this circle. Otherwise, assume
                  # it's not a circle but noise and ignore this cell in the hough matrix.
                  # In tests we've done, a value between 0.3~0.6 is optimal in most cases.
