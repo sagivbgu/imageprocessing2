@@ -1,8 +1,6 @@
 import math
 import cv2 as cv
 
-from utils import get_pixels_with_value
-
 THRESHOLD = 0.4  # Used to choose votes from the hough matrix.
                  # If the amount of votes > the circle's perimeter * THRESHOLD, then draw this circle. Otherwise, assume
                  # it's not a circle but noise and ignore this cell in the hough matrix.
@@ -20,10 +18,11 @@ class HoughMatrix3D:
           Instead, we later remove circles which are too close to each other.
 
         - the range of a is [0 , w), when w = width of the image
-        - the range of a is [0 , h), when h = height of the image
+        - the range of b is [0 , h), when h = height of the image
         - the range of r is [0 , d), when d = length of the diagonal
         - the (0,0) point is on the Top Left
     """
+
     def __init__(self, img_height, img_width):
         img_diagonal = math.sqrt(img_height ** 2 + img_width ** 2)
         self._a_max = img_width
@@ -111,3 +110,14 @@ def draw_circles_on_img(circles, img):
         return
     for (a, b, r) in circles:
         cv.circle(img, (a, b), r, DETECTED_CIRCLE_COLOR, 1)
+
+
+def get_pixels_with_value(image, val=255):
+    """
+    Get all the pixels in the image with intensity value as val.
+    :param image: The image to scan
+    :param val: The intensity value to look for
+    :return: A generator of pairs (x, y) representing the pixel's location in the image
+    """
+    h, w = image.shape
+    return [(x, y) for y in range(h) for x in range(w) if image[y][x] == val]
