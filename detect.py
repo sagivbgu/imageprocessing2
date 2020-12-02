@@ -55,34 +55,23 @@ def main():
 
     image = read_image(image_file)
 
-    print("Detecting edges", end="")
     # According to clarifications - threshold for edge detection is 100
     edges_image = detect_edges(image, threshold_val=100)
-    print(" - Done!")
 
-    print("Detecting lines", end="")
     lines = detect_lines(edges_image)
-    print(" - Done!")
 
-    print("Detecting circles", end="")
     circles = detect_circles(edges_image)
-    print(" - Done!")
 
     image = cv.cvtColor(image, cv.COLOR_GRAY2RGB)
-
     draw_lines_on_img(lines, image)
     draw_circles_on_img(circles, image)
 
     write_log_file(lines, circles, output_file)
-
     save_image(image)
     display_images(image, edges_image)
 
 
 if __name__ == "__main__":
-    # TODO: remove before submission
-    argv.append("many_lines.png")
-    argv.append("output.txt")
     if len(argv) != 3:
         print("Usage: {0} [image] [output]".format(argv[0]))
         exit()
