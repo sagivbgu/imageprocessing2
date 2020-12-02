@@ -22,7 +22,7 @@ class Line:
         self.points = points  # will hold the array of points
 
         self.points.sort()  # First by X and then by Y
-        self.start = self.points[0] if len(points) > 0 else None  # always with the smaller x
+        self.start = self.points[0] if len(points) > 0 else None  # always with the smaller x # TODO: Explain: bottom left etc.
         self.end = self.points[-1] if len(points) > 0 else None  # always with the larger x
         self.calc_slope_and_intercept()
 
@@ -58,7 +58,7 @@ class Line:
 
             # slope is infinity
             if x2 == x1:
-                return None, None
+                return None, None  # TODO: Did we mean: self.m = None ; self.c = None ; return
 
             m = (y2 - y1) / (x2 - x1)
             c = y2 - m * x2
@@ -364,8 +364,8 @@ def do_points_touch(p1, p2):
     return False
 
 
-def find_line_segments(line):
-    new_line = []
+def find_line_segments(line): # TODO: Get line segments
+    new_line = []  # TODO: rename line_segments
 
     # Set the first segment of the line, has the same rho and theta
     segment = Line(line.rho, line.theta, [])
@@ -387,7 +387,7 @@ def find_line_segments(line):
         # 2) open a new segment
         else:
             # wrap up the current segment
-            segment.calc_start_and_end_points()
+            segment.calc_start_and_end_points() # TODO: calc -> set
 
             # open a new segment
             segment = Line(line.rho, line.theta, [])
@@ -406,7 +406,7 @@ def find_line_segments(line):
 def calc_lines_segments(lines):
     new_lines = []
     for line in lines:
-        line_divided_into_segments = find_line_segments(line)
+        line_divided_into_segments = find_line_segments(line)  # TODO: segments_of_line
         new_lines.append(line_divided_into_segments)
 
     return new_lines
@@ -513,7 +513,7 @@ def eliminate_too_close_segments_between_two_lines(line1, line2):
 
 
 def eliminate_too_close_segments(lines):
-    new_lines = lines
+    new_lines = lines # TODO: Not needed
 
     for i in range(len(new_lines)):
         line1 = new_lines[i]
@@ -532,9 +532,11 @@ def unite_line_segments(line):
     if len(line) == 1:
         return line
 
+    # TODO: Delete
     if len(line) % 2 == 0:
         raise Exception("len of line is even? means it can't be in form of seg-gap-seg...")
 
+    # TODO: Delete
     # calc total length of line, gaps and segments
     line_length = 0
     segments_length = 0
@@ -566,7 +568,7 @@ def unite_line_segments(line):
 
             # if gap is really small compare to its neighbour segments
             elif gap.length() <= (prev_seg.length() + next_seg.length()) / 10:
-                united_segment.points += gap.points
+                united_segment.points += gap.points  # TODO: Delete this line
                 united_segment.points += next_seg.points
 
             # the gap is significant
