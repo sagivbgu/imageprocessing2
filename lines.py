@@ -301,7 +301,15 @@ def distance_between_point_and_line(point, line):
         x_intersect = (perp_line_c - line.c) / (line.m - perp_line_m)
         y_intersect = perp_line_m * x_intersect + perp_line_c
 
-    # if the intersection is not ON the line - meaning the perpendicular line doesn't intersect
+    # first check how far is the intersection from the actual line start and end points:
+    if (distance_between_two_points((x_intersect, y_intersect), line.start) <= 2) or \
+            (distance_between_two_points((x_intersect, y_intersect), line.end) <= 2):
+        # if it is less than 2 pixels - return 0, so it will be close
+        return 0
+
+    # if it's far from the start and end points, check if the intersection is on the line
+    #
+    # if the intersection is NOT ON the line - meaning the perpendicular line doesn't intersect
     # the actual given line (only its continuation) - then the distance doesn't matter to us
     # and we can say that the lines are far enough from each other
     if not (line.start[0] <= x_intersect <= line.end[0] and
@@ -614,7 +622,7 @@ def remove_duplicate_lines(lines):
 def remove_too_short_segments(segments, threshold):
     new_segments = []
     for seg in segments:
-        if seg.length() > threshold:
+        if seg.length() > math.ceil(threshold):
             new_segments.append(seg)
 
     return new_segments
