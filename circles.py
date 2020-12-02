@@ -1,4 +1,3 @@
-import json
 import math
 import cv2 as cv
 
@@ -42,26 +41,14 @@ class HoughMatrix3D:
         perimeter = 2 * math.pi * radius
         return cell_value >= perimeter * THRESHOLD
 
-    def dump(self, filename):
-        with open(filename, "w") as f:
-            json.dump(self._mat, f)
 
-    def load(self, filename):
-        with open(filename, "r") as f:
-            self._mat = json.load(f)
-
-
-def detect_circles(image, debug=False):  # TODO: Remove debug feature
+def detect_circles(image):
     # Image: The binary image to find circles in it
     h, w = image.shape
     hough_matrix = HoughMatrix3D(h, w)
 
-    if debug:
-        hough_matrix.load("mat.json")
-    else:
-        for (x, y) in get_pixels_with_value(image):
-            hough_matrix.increment_by_x_y(x, y)
-        hough_matrix.dump("mat.json")
+    for (x, y) in get_pixels_with_value(image):
+        hough_matrix.increment_by_x_y(x, y)
 
     circles = hough_matrix.get_all_above_threshold()
     circles = [c for c in circles if is_circle_inside_image(c[0], h, w)]  # c[0] is the circle (a, b, r), c[1] is the value of the corresponding cell in the hough matrix

@@ -65,8 +65,7 @@ def main():
     print(" - Done!")
 
     print("Detecting circles", end="")
-    #circles = detect_circles(edges_image)
-    circles = []
+    circles = detect_circles(edges_image)
     print(" - Done!")
 
     image = cv.cvtColor(image, cv.COLOR_GRAY2RGB)
