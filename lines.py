@@ -42,6 +42,9 @@ Explanation about the code:
     
 """
 
+# According to the clarifications - the minimal distance between two lines is 5 pixels
+MIN_DIST = 5
+
 
 class Line:
     """
@@ -299,9 +302,9 @@ def distance_between_point_and_line(point, line):
         y_intersect = perp_line_m * x_intersect + perp_line_c
 
     # first check how far is the intersection from the actual line start and end points:
-    if (distance_between_two_points((x_intersect, y_intersect), line.start) <= 2) or \
-            (distance_between_two_points((x_intersect, y_intersect), line.end) <= 2):
-        # if it is less than 2 pixels - return 0, so it will be close
+    if (distance_between_two_points((x_intersect, y_intersect), line.start) <= MIN_DIST) or \
+            (distance_between_two_points((x_intersect, y_intersect), line.end) <= MIN_DIST):
+        # if it is less than 5 pixels - return 0, so it will be close
         return 0
 
     # if it's far from the start and end points, check if the intersection is on the line
@@ -330,21 +333,21 @@ def are_segments_at_least_two_pixels_apart(line1, line2):
     #   line1=          ******************
     #   line2=                  ******************
     #
-    # and if (2) the distance between them is 2 pixels or less
+    # and if (2) the distance between them is MIN_DIST pixels or less
     #
     if line1.theta == line2.theta:
         # compare start and end points
         # if one of the edge points is too close - they are close
-        if (distance_between_point_and_line(line1.start, line2) <= 2) or \
-            (distance_between_point_and_line(line1.end, line2) <= 2) or \
-            (distance_between_point_and_line(line2.start, line1) <= 2) or \
-                (distance_between_point_and_line(line2.end, line1) <= 2):
+        if (distance_between_point_and_line(line1.start, line2) <= MIN_DIST) or \
+            (distance_between_point_and_line(line1.end, line2) <= MIN_DIST) or \
+            (distance_between_point_and_line(line2.start, line1) <= MIN_DIST) or \
+                (distance_between_point_and_line(line2.end, line1) <= MIN_DIST):
             return False
         else:
             return True
 
     # Now, if they are not parallel, we want to make sure that even if they intersect
-    # there is a point (on one of the lines) that is at least 2 pixels far from the other line
+    # there is a point (on one of the lines) that is at least 5 pixels far from the other line
 
     line1_far = False
     line2_far = False
@@ -352,12 +355,12 @@ def are_segments_at_least_two_pixels_apart(line1, line2):
     # For each point in line1
     for point in line1.points:
         # if you find a point far enough, the line is far
-        if distance_between_point_and_line(point, line2) > 2:
+        if distance_between_point_and_line(point, line2) > MIN_DIST:
             line1_far = True
             break
 
     for point in line2.points:
-        if distance_between_point_and_line(point, line1) > 2:
+        if distance_between_point_and_line(point, line1) > MIN_DIST:
             line2_far = True
             break
 
