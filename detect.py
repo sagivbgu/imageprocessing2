@@ -5,6 +5,19 @@ from circles import detect_circles, draw_circles_on_img
 from lines import detect_lines, draw_lines_on_img
 from edge import detect_edges
 
+"""
+Notes:
+
+In the end of the process
+- 2 images are displayed:
+1) The image after applying edge detection (the binary image B)
+2) The original image with the detected lines (light blue) and circles (yellow)
+
+- In addition, 2 files are saved:
+1) The output file                               (           {argv[2]}           )
+2) The image with the detected lines and circles ( {argv[1]}_after_detection.png )
+"""
+
 
 def read_image(file):
     return cv.imread(file, cv.IMREAD_GRAYSCALE)
