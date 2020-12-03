@@ -6,9 +6,6 @@ PADDING = 1
 
 
 def detect_edges(img, threshold_val):
-    # According to what we've learned - you better add Gaussian blurring before detecting edges
-    img = blur_image(img)
-
     # Add padding to the image so we can filter with a 3X3 kernel
     img = add_padding_to_image(img)
 
@@ -18,19 +15,10 @@ def detect_edges(img, threshold_val):
     # Threshold, default value is 100
     apply_threshold(img, threshold_val)
 
-    # According to what we've learned - you better dilate the image after edge detection
-    # and then apply thinning to retrieve the best edges result
-    img = apply_dilation(img)
-    img = apply_thinning(img)
-
     # remove the unnecessary padding we added before
     img = remove_padding_from_image(img)
 
     return img
-
-
-def blur_image(img, val=5):
-    return cv.GaussianBlur(img, (val, val), 0)
 
 
 def apply_edge_detection(img):
@@ -155,46 +143,3 @@ def apply_threshold(img, val=100):
             else:
                 img[y][x] = 255
     return img
-
-
-def apply_dilation(img):
-    height, width = img.shape
-    new_image = create_empty_img(height, width)
-
-    for y in range(PADDING, height - PADDING):
-        for x in range(PADDING, width - PADDING):
-            # Get all the 9 pixels area around the current pixel
-            roi = img[y - 1: y + 2, x - 1: x + 2]
-
-            # if at least one pixel in the region is white, then the
-            # center pixel is white
-            if 255 in roi:
-                new_image[y][x] = 255
-            # if all other pixels are black - then the center will be black
-            else:
-                new_image[y][x] = 0
-
-    return new_image
-
-
-def apply_thinning(img):
-    height, width = img.shape
-    kernel = cv.getStructuringElement(cv.MORPH_CROSS, (3, 3))
-    thin = create_empty_img(height, width)
-
-    temp_image = img.copy()
-
-    # Loop until erosion leads to an empty set
-    while cv.countNonZero(temp_image) != 0:
-        # Apply erosion
-        erode = cv.erode(temp_image, kernel)
-        # Apply opening morphology
-        opening = cv.morphologyEx(erode, cv.MORPH_OPEN, kernel)
-        # Subtract these two
-        subset = erode - opening
-        # Union of all previous sets
-        thin = cv.bitwise_or(subset, thin)
-        # Set the eroded image for next iteration
-        temp_image = erode.copy()
-
-    return thin
